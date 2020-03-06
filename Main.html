@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>RGU Campus Map</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <!--external script and CSS files from mapbox -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.css" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/CSS/style.css">
+    <link href='https://fonts.googleapis.com/css?family=Hind:400,300|Bangers' rel='stylesheet' type='text/css'>
+    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js'></script>
+    <link rel="stylesheet"  href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css" type="text/css"/>
+    <script type="text/javascript" src = "assets/js/customData.geojson.js"></script>  <!--Sample database for search bar -->
+</head>
+<body>
+<!--SEARCH BAR-->
+<div id="searchbar">
+    <img src="assets/images/rgulogo.jpg" alt="RGU Logo" id="rgulogo">
+
+    <form id="searchbox">
+        <input type="text" name="search" placeholder="Search RGU Maps" maxlength="2000">
+        <input type="submit" value="Go">
+        <input type="button" value="Browse" class=" ">
+    </form>
+
+    <img src="assets/images/campusmaplogo.jpg"  alt="Campus Map" id="campusmaplogo">
+
+    <!--NAVIGATION START-->
+    <nav>
+        <ul>
+            <li><a href="#"> Help </a> </li>
+            <li><a href="#"> Feedback </a> </li>
+            <li><a href="#"> Email </a> </li>
+            <li><a href="#"> Link </a> </li>
+            <li><a href="#"> Embed </a> </li>
+            <li><a href="#"> Print </a> </li>
+            <li><a href="https://www.firstgroup.com/aberdeen"> Bus Times </a></li>
+        </ul>
+    </nav>
+    <!--NAVIGATION END-->
+</div>
+
+<main class="grid-container">
+
+    <!--MAP STARTS HERE -->
+    <section class="grid-66">
+        <div id="map"></div>
+        <script>
+            /*PART I
+            1. LOAD MAPBOX API
+            2. SET GEOJSON DATABASE FOR MARKERS
+            3. PLACE THE MARKERS ACCORDING TO THE COORDINATE
+            4. SET THE POPUP */
+
+            // 1. MAPBOX API STARTS HERE
+            mapboxgl.accessToken = 'pk.eyJ1IjoiMTkxMzY0OCIsImEiOiJjazZxOGt0ZGUxYnpqM25seWs5dmd3OXAwIn0.1s0vMz3TjjKdS2bioM9_KQ';
+            var map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/streets-v11', //MAP LAYER STYLE
+                center: [-2.136063, 57.119206], //CENTRE COORDINATES OF THE MAP WHEN THE FIRST TIME THE MAP IS LOADED
+                zoom: 16 //ZOOM LEVEL 16
+            });
+           // map.addControl(new mapboxgl.NavigationControl()); // Add zoom and rotation controls to the map.
+
+            // 2. SET GEOJSON DATABASE FOR MARKERS
+
+            map.on('load', function() { //when map is loaded, call the function
+                map.addSource('places', { //Add source database from geojson
+                    'type': 'geojson', //define the source data as geojson
+                    'data': {
+                        'type': 'FeatureCollection', //data type is featurecollection
+                        'features': [
+                            {
+                                'type': 'Feature',
+                                'properties': { //properties of the type 'feature'
+                                    'description': //adding description
+                                        'The Sir Ian Wood Building',
+                                    'icon': 'college', //set icon for the marker.
+                                    //icons name can be found here: https://labs.mapbox.com/maki-icons/
+
+                                },
+                                'geometry': {
+                                    'type': 'Point',  //display as a point (marker)
+                                    'coordinates': [-2.134224, 57.118783] //Coordinate
+                                }
+                            },
+                            {
+                                'type': 'Feature',
+                                'properties': {
+                                    'description':
+                                        'The Ishbel Gordon Building',
+                                    'icon': 'college',
+
+
+                                },
+                                'geometry': {
+                                    'type': 'Point',
+                                    'coordinates': [-2.136099, 57.118950]
+                                }
+
+                            }
+                        ]
+                    }
+                });
+
+              // 3. PLACE THE MARKERS ACCORDING TO THE COORDINATE
+                //**Copy from the mapbox example codes
+                map.addLayer({   // Add a layer showing the places.
+                    'id': 'places',
+                    'type': 'symbol',
+                    'source': 'places', //calling the geojson data with the source name called 'Places'
+                    'layout': {
+                        'icon-image': '{icon}-15', //defining icons
+                        'icon-allow-overlap': true, //allow icon overlap
+                        "icon-size": 2 //the size of the icon
+
+                    }
+
+                });
+
+        // When a click event occurs on a feature in the places layer, open a popup at the
+        // location of the feature, with description HTML from its properties.
+                map.on('click', 'places', function(e) { //when the location from database is clicked, execute the below function
+                    var coordinates = e.features[0].geometry.coordinates.slice();  //set coordinates as variable and assign to the coordinate from geojson data
+                    var description = e.features[0].properties.description; //set description as variable and assign to the description from geojson data
+
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+                    while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                    }
+            //4. CREATE POPUP
+                    new mapboxgl.Popup()  //set the pop up
+                        .setLngLat(coordinates) //go to the coordinate to set the pop up
+                        .setHTML(description) //put the "description" from the geojson to the popup content
+                        .addTo(map); //add pop up to the map
+                });
+
+                map.on('mouseenter', 'places', function() { // WHEN THE MOUSE IS ON THE MARKER
+                    map.getCanvas().style.cursor = 'pointer'; //CHANGE TO POINTER
+                });
+
+                map.on('mouseleave', 'places', function() { //WHEN THE MOUSE LEAVES THE MARKER
+                    map.getCanvas().style.cursor = ''; //CHANGE BACK TO CURSOR
+                });
+            });
+        //END OF PLACING STATIC MARKERS & POPUP
+            /*PART II SEARCH FUNCTION STARTS HERE
+            **Important: I've created a file named called customData.geojson.js and attached to this html so that i can create database there and link back here.
+            REFER TO THE EXAMPLE: https://docs.mapbox.com/mapbox-gl-js/example/forward-geocode-custom-data/ */
+
+            function forwardGeocoder(query) { //CREATE FUNCTION CALLED FORWARDGEOCODER
+                var matchingFeatures = []; //CREATE VARIABLE CALLED MATCHING FEATURES
+                for (var i = 0; i < customData.features.length; i++) { //USE FOR LOOP FOR GEOJSON DATA ('CUSTOMDATA')
+                    var feature = customData.features[i];
+                    if (
+                        feature.properties.title //IN THE SEARCH BAR, THE USER WILL SEARCH BASED ON TITLE ATTRIBUTES
+                            .toLowerCase()   // handle queries with different capitalization than the source data by calling toLowerCase()
+                            .search(query.toLowerCase()) !== -1 //not sure what it means, got it from the mapbox documentation
+                    ) {
+                        //below codes are from the mapbox documentation  https://docs.mapbox.com/mapbox-gl-js/example/forward-geocode-custom-data
+                        feature['place_name'] = feature.properties.title;
+                        feature['center'] = feature.geometry.coordinates;
+                        feature['place_type'] = ['Feature'];
+                        matchingFeatures.push(feature);
+
+                    }
+                }
+                return matchingFeatures; //return the matching keyword
+
+            }
+           map.on('load', function(){ //when the map is loaded
+
+                var geocoder = new MapboxGeocoder({
+                    accessToken: mapboxgl.accessToken, //setting mapbox api
+                    localGeocoder: forwardGeocoder, //use "forwardgeocoder" function
+                    zoom: 18, //zoom level after search
+                    placeholder: 'Enter search e.g. N105', //search bar placeholder
+                    bbox: [-2.150487589787133,57.1175191529322,-2.1295870552029896,57.12004068267734], // set search boundary, (only to RGU campus)
+                    mapboxgl: mapboxgl //just followed the mapbox documentation
+                });
+
+                geocoder.on('result', function(ev) {
+                  map.getSource('places').setData(ev.result.geometry);
+                   var popup = new mapboxgl.Popup({ offset: 25 }) //create popup with an offet of 25
+                        .setLngLat([ev.result.geometry.coordinates[0], ev.result.geometry.coordinates[1]]) //create an popup on the coordinates from search result
+                        .setHTML('Location: ' + ev.result.place_name) //set popup content for example (Location "N105" for this case, N105 is the ev.result.place_name]
+
+                   var marker = new mapboxgl.Marker() //create variable for marker
+                        .setLngLat([ev.result.geometry.coordinates[0], ev.result.geometry.coordinates[1]]) //create the marker on the coordinates from search result
+                        .setPopup(popup) // sets a popup on this marker
+                        .addTo(map); //add to map
+
+                });
+                map.addControl(geocoder);
+
+            })
+        </script>
+    </section>
+
+    <!--SIDEBAR START-->
+    <div id=container>
+        <div id=options-box>
+            <h4>Hi! Welcome to RGU Campus Map</h4>
+            <p>Not sure of how to find your lecture rooms? Finding your way around school made easy. </p>
+            <p>Map Instructions: </p>
+            <ul>
+                <li>
+                    <strong>Search</strong>
+                    the map
+                    <ul>
+                        <li>Click on the <b>search</b> and search for rooms <img src="assets/images/search.png" height="20" width="20" alt="Search instruction"></li>
+                        <li>Click on the <b>Browse</b> button and view categories <img src="assets/images/browser.png" height="20" width="20" alt="Browse instruction"></li>
+                        <li>Click on <b>markers</b> to display more information about the specific location <img src="assets/images/placeholder.png" height="20" width="20" alt="Marker Instruction"></li>
+                    </ul>
+                </li>
+                <li><b>Search the map</b></li>
+                <ul>
+                    <li><a href="#"> Bus Stop </a></li>
+                    <li><a href="#"> Main Eating Area </a></li>
+                    <li><a href="#"> Medical Center </a></li>
+                    <li><a href="#"> RGU Union </a></li>
+                </ul>
+                </li>
+                <li> <b>Locate buildings</b>
+                    <ul>
+                        <li><a href="#"> The Sir Ian Wood Building </a></li>
+                        <li><a href="#"> The Ishbel Gordon Building </a></li>
+                        <li><a href="#"> Aberdeen Buisness School </a></li>
+                        <li><a href="#"> Gray's School of Art </a></li>
+                        <li><a href="https://www.firstgroup.com/aberdeen"> Bus Times </a></li>
+                    </ul>
+                    <button type="button">Bus Times </button>
+                </li>
+            </ul>
+        </div></div>
+    <!--SIDEBAR ENDS-->
+
+
+</body>
+<footer>
+    <div id="footer">
+        <p id="footer-left">
+            <!-- <a href="" id=fs class=active>Close sidebar</a> -->
+            <a href="" id="fs" class="active"></a>
+            <a href="" id="ntuaddr">Group F</a>
+        <p id="footer-right">
+            <a href="https://www3.rgu.ac.uk/about?" id="about">About</a>
+            <a target="blank" href=#>Copyright</a>
+            <a target="blank" href=#>Disclaimer</a>
+            <a target="blank" href=#>Privacy Statement</a>
+            <span>©2020 <a href="http://www.rgu.ac.uk/">Robert Gordon University Aberdeen</a></span>
+        </p>
+    </div>
+</footer>
+</html>
