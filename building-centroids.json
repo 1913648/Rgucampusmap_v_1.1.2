@@ -1,0 +1,14 @@
+ {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.1345204802807416,
+      57.118596877616795
+        ]
+      },
+      "properties": {
+        "title": "N105",
+        "building_id": "0001"
+      }
+    }
